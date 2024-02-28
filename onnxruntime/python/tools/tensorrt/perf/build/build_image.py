@@ -138,17 +138,13 @@ def docker_build_trt_bin(args: argparse.Namespace):
 
     if not is_valid_ver_str(args.trt_version, 4, 4):
         print(
-            "[ERROR]: Must specify a valid TensorRT version for binary TensorRT installs (e.g., 8.x.x.x)",
+            "[ERROR]: Must specify a valid TensorRT version for binary TensorRT installs (e.g., 10.x.x.x)",
             file=sys.stderr,
         )
         sys.exit(1)
 
     if not is_valid_ver_str(args.tar_cuda_version, 2, 2):
-        print("[ERROR]: Must specify a valid CUDA version for binary TensorRT installs (e.g., 11.x)", file=sys.stderr)
-        sys.exit(1)
-
-    if not is_valid_ver_str(args.tar_cudnn_version, 2, 2):
-        print("[ERROR]: Must specify a valid cuDNN version for binary TensorRT installs (e.g., 8.x)", file=sys.stderr)
+        print("[ERROR]: Must specify a valid CUDA version for binary TensorRT installs (e.g., 12.x)", file=sys.stderr)
         sys.exit(1)
 
     if not os.path.isfile(docker_file_path):
@@ -169,8 +165,6 @@ def docker_build_trt_bin(args: argparse.Namespace):
             f"TAR_TRT_VERSION={args.trt_version}",
             "--build-arg",
             f"TAR_CUDA_VERSION={args.tar_cuda_version}",
-            "--build-arg",
-            f"TAR_CUDNN_VERSION={args.tar_cudnn_version}",
             "--build-arg",
             f"TRT_BINS_DIR={args.trt_bins_dir}",
             "-f",
@@ -209,11 +203,6 @@ def parse_arguments() -> argparse.Namespace:
         "--tar_cuda_version",
         default="",
         help="CUDA version (e.g., 11.8) used to find TensorRT EA binary tar.gz package",
-    )
-    parser.add_argument(
-        "--tar_cudnn_version",
-        default="",
-        help="CUDA version (e.g., 8.6) used to find TensorRT EA binary tar.gz package",
     )
     parser.add_argument("--trt_bins_dir", default="", help="Directory containing TensorRT tar.gz package")
     parser.add_argument(
