@@ -40,7 +40,6 @@ ARG TAR_TRT_VERSION
 ARG TAR_CUDA_VERSION
 
 # Directory containing TensorRT tar.gz installation package
-# i.e TensorRT-10.0.0.2.Linux.x86_64-gnu.cuda-12.4.tar.gz
 ARG TRT_BINS_DIR=.
 COPY ${TRT_BINS_DIR}/TensorRT-${TAR_TRT_VERSION}.Linux.x86_64-gnu.cuda-${TAR_CUDA_VERSION}.tar.gz /TensorRT-${TAR_TRT_VERSION}.tar.gz
 
@@ -48,7 +47,7 @@ COPY ${TRT_BINS_DIR}/TensorRT-${TAR_TRT_VERSION}.Linux.x86_64-gnu.cuda-${TAR_CUD
 RUN tar -xzvf /TensorRT-${TAR_TRT_VERSION}.tar.gz
 
 RUN cd /TensorRT-${TAR_TRT_VERSION}/python &&\
-    python3 -m pip install tensorrt-${TAR_TRT_VERSION}-cp38-none-linux_x86_64.whl
+    python3 -m pip install tensorrt*cp38*.whl
 
 RUN cp -r /TensorRT-${TAR_TRT_VERSION}/lib/* /usr/lib/x86_64-linux-gnu/
 RUN cp /TensorRT-${TAR_TRT_VERSION}/include/* /usr/local/include/
