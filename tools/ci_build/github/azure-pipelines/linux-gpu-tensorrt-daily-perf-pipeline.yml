@@ -6,7 +6,7 @@ parameters:
   default: true
 
 - name: TrtVersion
-  displayName: TensorRT Version (update tar config in Variables below if BIN is selected)
+  displayName: TensorRT Version
   type: string
   default: 8.6.cuda_11_8_cudnn_8
   values:
@@ -17,7 +17,7 @@ parameters:
   - BIN
 
 - name: UseTensorrtOssParser
-  displayName: Use TensorRT-OSS Parser
+  displayName: Use TensorRT-OSS Parser (not compatible with BIN)
   type: boolean
   default: false
 
