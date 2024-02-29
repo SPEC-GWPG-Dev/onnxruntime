@@ -14,9 +14,10 @@ import sys
 from typing import List, Optional
 
 TRT_DOCKER_FILES = {
-    "8.4": "tools/ci_build/github/linux/docker/Dockerfile.ubuntu_cuda11_6_tensorrt8_4",
-    "8.5": "tools/ci_build/github/linux/docker/Dockerfile.ubuntu_cuda11_8_tensorrt8_5",
-    "8.6": "tools/ci_build/github/linux/docker/Dockerfile.ubuntu_cuda12_3_tensorrt8_6",
+    "8.4.cuda_11_6_cudnn_8": "tools/ci_build/github/linux/docker/Dockerfile.ubuntu_cuda11_6_tensorrt8_4",
+    "8.5.cuda_11_8_cudnn_8": "tools/ci_build/github/linux/docker/Dockerfile.ubuntu_cuda11_8_tensorrt8_5",
+    "8.6.cuda_11_8_cudnn_8": "tools/ci_build/github/linux/docker/Dockerfile.ubuntu_cuda11_8_tensorrt8_6",
+    "8.6.cuda_12_3_cudnn_9": "tools/ci_build/github/linux/docker/Dockerfile.ubuntu_cuda12_3_tensorrt8_6",
     "BIN": "tools/ci_build/github/linux/docker/Dockerfile.ubuntu_tensorrt_bin",
 }
 
@@ -104,7 +105,7 @@ def docker_build_trt(args: argparse.Namespace):
         sys.exit(1)
 
     vers_comps = args.trt_version.split(".")
-    trt_ver_key = f"{vers_comps[0]}.{vers_comps[1]}"
+    trt_ver_key = f"{vers_comps[0]}.{vers_comps[1]}.{vers_comps[-1]}"
 
     if trt_ver_key not in TRT_DOCKER_FILES:
         print(f"[ERROR]: TensorRT version '{args.trt_version}' is currently unsupported", file=sys.stderr)
@@ -138,13 +139,13 @@ def docker_build_trt_bin(args: argparse.Namespace):
 
     if not is_valid_ver_str(args.trt_version, 4, 4):
         print(
-            "[ERROR]: Must specify a valid TensorRT version for binary TensorRT installs (e.g., 10.x.x.x)",
+            "[ERROR]: Must specify a valid TensorRT version for binary TensorRT installs (e.g., 10.0.0.2)",
             file=sys.stderr,
         )
         sys.exit(1)
 
     if not is_valid_ver_str(args.tar_cuda_version, 2, 2):
-        print("[ERROR]: Must specify a valid CUDA version for binary TensorRT installs (e.g., 12.x)", file=sys.stderr)
+        print("[ERROR]: Must specify a valid CUDA version for binary TensorRT installs (e.g., 12.4)", file=sys.stderr)
         sys.exit(1)
 
     if not os.path.isfile(docker_file_path):
@@ -189,7 +190,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("-r", "--repo_path", required=True, help="Path to the onnxruntime repository")
     parser.add_argument("-i", "--image_name", required=True, help="The resulting Docker image name")
     parser.add_argument("-b", "--branch", default="main", help="Name of the onnxruntime git branch to checkout")
-    parser.add_argument("-t", "--trt_version", default="8.6.1.6", help="TensorRT version (e.g., 8.6.1.6)")
+    parser.add_argument("-t", "--trt_version", default="8.6.cuda_11_8_cudnn_8", help="TensorRT version (e.g., 8.6.cuda_11_8_cudnn_8)")
     parser.add_argument("-a", "--cuda_arch", default="75", help="CUDA architecture (e.g., 75)")
 
     # Command-line options for installing TensorRT from binaries.
