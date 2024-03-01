@@ -100,18 +100,11 @@ def docker_build_trt(args: argparse.Namespace):
     :param args: The arguments to this script.
     """
 
-    if not is_valid_ver_str(args.trt_version, min_comps=2, max_comps=4):
-        print(f"[ERROR]: Invalid TensorRT version '{args.trt_version}'", file=sys.stderr)
-        sys.exit(1)
-
-    vers_comps = args.trt_version.split(".")
-    trt_ver_key = f"{vers_comps[0]}.{vers_comps[1]}.{vers_comps[-1]}"
-
-    if trt_ver_key not in TRT_DOCKER_FILES:
+    if args.trt_version not in TRT_DOCKER_FILES:
         print(f"[ERROR]: TensorRT version '{args.trt_version}' is currently unsupported", file=sys.stderr)
         sys.exit(1)
 
-    docker_file = TRT_DOCKER_FILES[trt_ver_key]
+    docker_file = TRT_DOCKER_FILES[args.trt_version]
     docker_file_path = os.path.normpath(os.path.join(args.repo_path, docker_file))
 
     if not os.path.isfile(docker_file_path):
@@ -203,7 +196,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--tar_cuda_version",
         default="",
-        help="CUDA version (e.g., 11.8) used to find TensorRT EA binary tar.gz package",
+        help="CUDA version (e.g., 12.4) used to find TensorRT EA binary tar.gz package",
     )
     parser.add_argument("--trt_bins_dir", default="", help="Directory containing TensorRT tar.gz package")
     parser.add_argument(
