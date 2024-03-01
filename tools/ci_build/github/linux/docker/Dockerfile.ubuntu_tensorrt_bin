@@ -80,6 +80,7 @@ ARG ONNXRUNTIME_COMMIT_ID
 # The supported CUDA architecture
 ARG CMAKE_CUDA_ARCHITECTURES=75
 
+# Prepare onnxruntime repository & build onnxruntime with TensorRT
 WORKDIR ${ONNXRUNTIME_LOCAL_CODE_DIR}
 
 # Clone ORT repository with branch
