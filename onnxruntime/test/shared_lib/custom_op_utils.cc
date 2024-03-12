@@ -180,6 +180,47 @@ void MyCustomKernelWithOptionalInput::Compute(OrtKernelContext* context) {
   }
 }
 
+OrtStatusPtr MyCustomKernelWithOptionalOutput::ComputeV2(OrtKernelContext* context) {
+  // Setup inputs
+  try {
+    Ort::KernelContext ctx(context);
+    auto input_X1 = ctx.GetInput(0);
+    const float* X1 = input_X1.GetTensorData<float>();
+
+    const auto type_shape = input_X1.GetTensorTypeAndShapeInfo();
+    const auto input_shape = type_shape.GetShape();
+
+    // We have 3 outputs, but the second one is optional
+    auto output_Y1 = ctx.GetOutput(0, input_shape.data(),
+                                   input_shape.size());
+    float* out_1 = output_Y1.GetTensorMutableData<float>();
+
+    auto output_Y2 = ctx.GetOutput(1, input_shape.data(),
+                                   input_shape.size());
+    // Test if the output is present or not
+    float* out_2 = (output_Y2) ? output_Y2.GetTensorMutableData<float>() : nullptr;
+
+    auto output_3 = ctx.GetOutput(2, input_shape.data(),
+                                  input_shape.size());
+    float* out_3 = output_3.GetTensorMutableData<float>();
+
+    // Copy to outputs
+    if (out_2 != nullptr) {
+      for (size_t i = 0, lim = type_shape.GetElementCount(); i < lim; i++) {
+        out_1[i] = out_2[i] = out_3[i] = X1[i];
+      }
+    } else {
+      for (size_t i = 0, lim = type_shape.GetElementCount(); i < lim; i++) {
+        out_1[i] = out_3[i] = X1[i];
+      }
+    }
+  } catch (const std::exception& e) {
+    Ort::Status s(e);
+    return s.release();
+  }
+  return nullptr;
+}
+
 void MyCustomStringLengthsKernel::Compute(OrtKernelContext* context) {
   Ort::KernelContext kcontext(context);
   constexpr std::array<const int64_t, 1> output_shape = {1};

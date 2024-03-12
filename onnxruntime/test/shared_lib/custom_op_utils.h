@@ -157,6 +157,53 @@ struct MyCustomOpWithOptionalInput : Ort::CustomOpBase<MyCustomOpWithOptionalInp
   const char* provider_;
 };
 
+// Second output is optional
+struct MyCustomKernelWithOptionalOutput {
+  MyCustomKernelWithOptionalOutput(const OrtKernelInfo* /*info*/) {
+  }
+  OrtStatusPtr ComputeV2(OrtKernelContext* context);
+};
+
+struct MyCustomOpWithOptionalOutput : Ort::CustomOpBase<MyCustomOpWithOptionalOutput,
+                                                        MyCustomKernelWithOptionalOutput,
+                                                        true> {
+  explicit MyCustomOpWithOptionalOutput(const char* provider) noexcept : provider_(provider) {
+  }
+
+  OrtStatusPtr CreateKernelV2(const OrtApi& /* api */, const OrtKernelInfo* info, void** kernel) const {
+    *kernel = new MyCustomKernelWithOptionalOutput(info);
+    return nullptr;
+  };
+
+  const char* GetName() const noexcept { return "WithOptionalOutput"; }
+  const char* GetExecutionProviderType() const { return provider_; }
+
+  size_t GetInputTypeCount() const noexcept { return 1; }
+  ONNXTensorElementDataType GetInputType(size_t /*index*/) const noexcept {
+    return ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT;
+  }
+
+  OrtCustomOpInputOutputCharacteristic GetInputCharacteristic(size_t /*index*/) const noexcept {
+    return OrtCustomOpInputOutputCharacteristic::INPUT_OUTPUT_REQUIRED;
+  }
+
+  size_t GetOutputTypeCount() const noexcept { return 3; }
+  ONNXTensorElementDataType GetOutputType(size_t /*index*/) const noexcept {
+    return ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT;
+  }
+
+  OrtCustomOpInputOutputCharacteristic GetOutputCharacteristic(size_t index) const noexcept {
+    // output 1 is optional
+    if (index == 0 || index == 2)
+      return OrtCustomOpInputOutputCharacteristic::INPUT_OUTPUT_REQUIRED;
+
+    return OrtCustomOpInputOutputCharacteristic::INPUT_OUTPUT_OPTIONAL;
+  }
+
+ private:
+  const char* provider_;
+};
+
 // Custom kernel that outputs the lengths of all input strings.
 struct MyCustomStringLengthsKernel {
   explicit MyCustomStringLengthsKernel(const OrtKernelInfo* /* info */) {}

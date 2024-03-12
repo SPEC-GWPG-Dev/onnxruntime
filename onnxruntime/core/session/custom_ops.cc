@@ -1119,14 +1119,6 @@ static void InferOutputTypes(const ONNX_NAMESPACE::OpSchema& schema, gsl::span<c
     const auto& param = outputs[schema_output_index];
     const auto& output_name = param.GetName();
 
-    if (output_type == nullptr) {
-      if (param.GetOption() == ONNX_NAMESPACE::OpSchema::FormalParameterOption::Optional)
-        continue;
-
-      ORT_THROW("[CustomOP type inferencing error]: kernel Output: ", output_name,
-                " is absent, but not optional. Op : ", schema.Name());
-    }
-
     const bool is_variadic_output = (param.GetOption() == ONNX_NAMESPACE::OpSchema::FormalParameterOption::Variadic);
     const bool is_homogeneous = param.GetIsHomogeneous();
 
@@ -1221,8 +1213,7 @@ common::Status CreateCustomRegistry(gsl::span<OrtCustomOpDomain* const> op_domai
       schemas.push_back(schema);
       auto infer_fn = schemas.back().GetTypeAndShapeInferenceFunction();
       ONNX_NAMESPACE::InferenceFunction extended_infer_fn = [schema, infer_fn = std::move(infer_fn),
-                                                             kernel_defs = std::move(kernel_def_map[name])]
-                                                             (ONNX_NAMESPACE::InferenceContext& infer_ctx) {
+                                                             kernel_defs = std::move(kernel_def_map[name])](ONNX_NAMESPACE::InferenceContext& infer_ctx) {
         InferOutputTypes(schema, kernel_defs, infer_ctx);
         if (infer_fn) {
           infer_fn(infer_ctx);

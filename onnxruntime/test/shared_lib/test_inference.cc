@@ -208,7 +208,8 @@ static constexpr PATH_TYPE MODEL_WITH_CUSTOM_MODEL_METADATA = TSTR("testdata/mod
 static constexpr PATH_TYPE VARIED_INPUT_CUSTOM_OP_MODEL_URI = TSTR("testdata/VariedInputCustomOp.onnx");
 static constexpr PATH_TYPE VARIED_INPUT_CUSTOM_OP_MODEL_URI_2 = TSTR("testdata/foo_3.onnx");
 static constexpr PATH_TYPE OPTIONAL_INPUT_OUTPUT_CUSTOM_OP_MODEL_URI = TSTR("testdata/foo_bar_1.onnx");
-static constexpr PATH_TYPE OPTIONAL_INPUT_OUTPUT_CUSTOM_OP_MODEL_URI_2 = TSTR("testdata/foo_bar_2.onnx");
+static constexpr PATH_TYPE OPTIONAL_INPUT_CUSTOM_OP_MODEL_URI_2 = TSTR("testdata/foo_bar_2.onnx");
+static constexpr PATH_TYPE OPTIONAL_OUTPUT_CUSTOM_OP_MODEL_URI = TSTR("testdata/custom_op_library/custom_op_optional_output.onnx");
 static constexpr PATH_TYPE VARIADIC_INPUT_OUTPUT_CUSTOM_OP_MODEL_URI = TSTR("testdata/custom_op_variadic_io.onnx");
 static constexpr PATH_TYPE VARIADIC_UNDEF_INPUT_OUTPUT_CUSTOM_OP_MODEL_URI = TSTR(
     "testdata/custom_op_variadic_undef_io.onnx");
@@ -1082,7 +1083,7 @@ TEST(CApiTest, invalid_variadic_input_homogeneity_custom_op) {
   }
 }
 
-TEST(CApiTest, optional_input_output_custom_op_handler) {
+TEST(CApiTest, optional_input_custom_op_handler) {
   MyCustomOpWithOptionalInput custom_op{onnxruntime::kCpuExecutionProvider};
 
   // `MyCustomOpFooBar` defines a custom op with atmost 3 inputs and the second input is optional.
@@ -1147,7 +1148,7 @@ TEST(CApiTest, optional_input_output_custom_op_handler) {
   {
     std::vector<const char*> input_names = {"X1", "X2"};
     ort_inputs.erase(ort_inputs.begin() + 2);  // remove the last input in the container
-    Ort::Session session(*ort_env, OPTIONAL_INPUT_OUTPUT_CUSTOM_OP_MODEL_URI_2, session_options);
+    Ort::Session session(*ort_env, OPTIONAL_INPUT_CUSTOM_OP_MODEL_URI_2, session_options);
     auto ort_outputs = session.Run(Ort::RunOptions{}, input_names.data(), ort_inputs.data(), ort_inputs.size(),
                                    &output_name, 1);
     ASSERT_EQ(ort_outputs.size(), 1u);
@@ -1166,6 +1167,45 @@ TEST(CApiTest, optional_input_output_custom_op_handler) {
     }
   }
 }
+
+TEST(CApiTest, optional_output_custom_op_handler) {
+  MyCustomOpWithOptionalOutput custom_op{onnxruntime::kCpuExecutionProvider};
+
+  // `WithOptionalOutput` defines a custom op with 1 input, 3 outputs
+  // output 1 is optional
+  Ort::CustomOpDomain custom_op_domain("test");
+  custom_op_domain.Add(&custom_op);
+
+  Ort::SessionOptions session_options;
+  session_options.Add(custom_op_domain);
+
+  std::vector<Ort::Value> ort_inputs;
+
+  Ort::MemoryInfo info("Cpu", OrtDeviceAllocator, 0, OrtMemTypeDefault);
+
+  // input 0
+  constexpr std::array<const char*, 1> input_names = {"GraphIn0"};
+  constexpr std::array<const char*, 2> output_names = {"GraphOut0", "GraphOut1"};
+  /* non-const */ std::array<float, 2> input_0_data = {1.f, 2.f};
+  constexpr std::array<int64_t, 1> input_0_dims = {2};
+  ort_inputs.emplace_back(
+      Ort::Value::CreateTensor<float>(info, input_0_data.data(),
+                                      input_0_data.size(), input_0_dims.data(), input_0_dims.size()));
+
+  Ort::Session session(*ort_env, OPTIONAL_OUTPUT_CUSTOM_OP_MODEL_URI, session_options);
+  Ort::RunOptions run_opts;
+  auto ort_outputs = session.Run(run_opts, input_names.data(), ort_inputs.data(), ort_inputs.size(),
+                                 output_names.data(), output_names.size());
+  ASSERT_EQ(ort_outputs.size(), 2u);
+
+  for (const auto& ort_value : ort_outputs) {
+    auto type_info = ort_value.GetTensorTypeAndShapeInfo();
+    ASSERT_EQ(type_info.GetElementCount(), input_0_data.size());
+    const float* data = ort_value.GetTensorData<float>();
+    ASSERT_EQ(memcmp(data, input_0_data.data(), input_0_data.size() * sizeof(float)), 0);
+  }
+}
+
 TEST(CApiTest, custom_op_with_attributes_handler) {
   MyCustomOpWithAttributes custom_op{onnxruntime::kCpuExecutionProvider};
 
